@@ -131,7 +131,7 @@ class LinkSolver:
 
     def sort_by_proximity(self, path):
         ret = 0
-        for position in path:
+        for position in path[1:-1]:
             x, y = position
             if x - 1 < 0 or self.board.data[x - 1, y, 0] != 0:
                 ret -= 1
@@ -151,31 +151,27 @@ class LinkSolver:
         curr_link = self.links.pop(0)
         possible_paths = curr_link.possible_paths
 
-        if len(possible_paths) == 0:
-            return False
+        while len(possible_paths) == 1:
+            path = possible_paths[0]
+            x, y = path[-1]
+            self.links.remove(self.board.data[x, y, 0])
+            self.board.fill_path(path, curr_link)
+            self.reevaluate_links_and_sort(path)
+            if not self.links:
+                self.board.pretty_print()
+                return True
+            curr_link = self.links.pop(0)
+            possible_paths = curr_link.possible_paths
 
-        else:
-            while len(possible_paths) == 1:
-                path = possible_paths[0]
-                x, y = path[-1]
-                self.links.remove(self.board.data[x, y, 0])
-                self.board.fill_path(path, curr_link)
-                self.reevaluate_links_and_sort(path)
-                if not self.links:
-                    self.board.pretty_print()
-                    return True
-                curr_link = self.links.pop(0)
-                possible_paths = curr_link.possible_paths
-
-            for path in possible_paths:
-                new_self = self.fast_copy()
-                x, y = path[-1]
-                new_self.links.remove(new_self.board.data[x, y, 0])
-                new_self.board.fill_path(path, curr_link)
-                if not new_self.reevaluate_links_and_sort(path):
-                    continue
-                if new_self.solve():
-                    return True
+        for path in possible_paths:
+            new_self = self.fast_copy()
+            x, y = path[-1]
+            new_self.links.remove(new_self.board.data[x, y, 0])
+            new_self.board.fill_path(path, curr_link)
+            if not new_self.reevaluate_links_and_sort(path):
+                continue
+            if new_self.solve():
+                return True
 
         return False
 
@@ -200,7 +196,7 @@ class LinkSolver:
 
 
 if __name__ == '__main__':
-    mat_data = scipy.io.loadmat('data_32_32_tokyotower.mat')
+    mat_data = scipy.io.loadmat('data_20_20_golf.mat')
     mat = np.zeros((mat_data['total_col'][0, 0], mat_data['total_row'][0, 0]), dtype=tuple)
     for mat_link in mat_data['puzzledata']:
         mat[mat_link[2] - 1, mat_link[3] - 1] = [mat_link[0], mat_link[1]]
