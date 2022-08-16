@@ -183,7 +183,7 @@ class LinkSolver:
         return False
 
     def fast_copy(self):
-        new_self = LinkSolver(np.empty((1, 1)))
+        new_self = LinkSolver(np.zeros((1, 1)))
         new_data = np.copy(self.board.data)
         new_links = []
         for link in self.links:
