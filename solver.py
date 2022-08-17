@@ -82,35 +82,30 @@ class Board:
             for item in row:
                 if item[0] != 0:
                     ret += chr(9608) + chr(9608)
-                    # if not item[0] > -1:
-                    #     ret += str(item[0].init_dist % 10)
-                    # else:
-                    #     ret += str(item[0] % 10)
                 else:
-                    # ret += str(0)
                     ret += "  "
             ret += "\n"
         return ret
 
 
 class LinkSolver:
-    def __init__(self, data):
-        self.links = []
-        width = len(data)
-        height = len(data[0])
-        curr_data = np.zeros((width, height, 2), dtype=Link)
-        for row in range(width):
-            for col in range(height):
-                if data[row, col] != 0:
-                    curr_val = data[row, col]
-                    curr_data[row, col, :] = (curr_val[0], curr_val[1])
-                    if curr_val[0] > 2:
-                        curr_link = Link(curr_val[0], (row, col), curr_val[1])
-                        curr_data[row, col, 0] = curr_link
-                        curr_data[row, col, 1] = curr_link.color
-                        self.links.append(curr_link)
-        self.board = Board(curr_data, width, height)
-        self.init_paths_for_links()
+    def __init__(self, data=None):
+        if data is not None:
+            self.links = []
+            width = len(data)
+            height = len(data[0])
+            curr_data = np.zeros((width, height, 2), dtype=Link)
+            for row in range(width):
+                for col in range(height):
+                    if data[row, col] != 0:
+                        curr_val = data[row, col]
+                        curr_data[row, col, :] = (curr_val[0], curr_val[1])
+                        if curr_val[0] > 2:
+                            curr_link = Link(curr_val[0], (row, col), curr_val[1])
+                            curr_data[row, col, :] = curr_link, curr_link.color
+                            self.links.append(curr_link)
+            self.board = Board(curr_data, width, height)
+            self.init_paths_for_links()
 
     def init_paths_for_links(self):
         for link in self.links:
@@ -183,7 +178,7 @@ class LinkSolver:
         return False
 
     def fast_copy(self):
-        new_self = LinkSolver(np.zeros((1, 1)))
+        new_self = LinkSolver()
         new_data = np.copy(self.board.data)
         new_links = []
         for link in self.links:
