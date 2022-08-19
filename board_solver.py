@@ -1,6 +1,7 @@
 from board import Board
 import copy
 
+
 class BoardSolver:
     def __init__(self, board):
         self.board = board
@@ -18,9 +19,9 @@ class BoardSolver:
     def solve(self):
         # Calculate the possible paths for all clues
         self.board.calculate_all_paths()
-        self.solve2()
+        self.solve_helper()
 
-    def solve2(self):
+    def solve_helper(self):
         if self.is_complete():
             return True
 
@@ -34,7 +35,7 @@ class BoardSolver:
             while len(clue_paths) == 1:
                 # Fill that sole path
                 path = clue_paths[0]
-                self.board.fill_path(path=path, color=current_clue.color)
+                self.board.fill_path(path=path, color=current_clue.color, length=current_clue.length)
                 # Reevaluate the clues and sort them
                 if not self.board.reevaluate_clues(path=path):
                     print("A clue has no possible paths! Aborting...")
@@ -46,9 +47,8 @@ class BoardSolver:
 
             for path in clue_paths:
                 new_board = self.board.__deepcopy__()
-                new_board.fill_path(path=path, color=current_clue.color)
+                new_board.fill_path(path=path, color=current_clue.color, length=current_clue.length)
                 if not new_board.reevaluate_clues(path=path):
                     continue
-                if BoardSolver(new_board).solve2():
+                if BoardSolver(new_board).solve_helper():
                     return True
-

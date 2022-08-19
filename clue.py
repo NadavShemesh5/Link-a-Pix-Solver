@@ -3,8 +3,7 @@ from node import Node
 
 class Clue(Node):
     def __init__(self, x: int, y: int, length: int, color: int):
-        super().__init__(x, y, color)
-        self.length = length
+        super().__init__(x, y, color, length)
         self.paths = []
 
     def calculate_paths(self, board):

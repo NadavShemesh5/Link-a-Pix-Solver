@@ -30,7 +30,7 @@ class Board:
                 self.set(x, y, clue)
             else:
                 # If length is 1, then we can automatically color it
-                self.set(x, y, Node(x=x, y=y, color=color))
+                self.set(x, y, Node(x=x, y=y, color=color, length=length))
         self.board_w = len(self.state)
         self.board_h = len(self.state[0])
 
@@ -62,14 +62,17 @@ class Board:
         clue = self.get(x, y)
         self.clues.remove(clue)
 
-    def fill_path(self, path, color):
+    def fill_path(self, path, color, length):
         # Remove target clue from board
         target_x, target_y = path[-1]
         self.remove_clue(target_x, target_y)
 
         # Add colored nodes to board
-        for x, y in path:
-            self.set(x, y, Node(x, y, color=color))
+        for i, (x, y) in enumerate(path):
+            if i == 0 or i == len(path) - 1:
+                self.set(x, y, Node(x=x, y=y, color=color, length=length))
+            else:
+                self.set(x, y, Node(x=x, y=y, color=color))
 
     def sort_by_proximity(self, path):
         ret = 0

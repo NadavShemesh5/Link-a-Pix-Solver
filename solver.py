@@ -204,7 +204,7 @@ class LinkSolver:
 
 
 if __name__ == '__main__':
-    mat_data = scipy.io.loadmat('data_20_20_basketball.mat')
+    mat_data = scipy.io.loadmat('data_20_20_swim.mat')
     mat = np.zeros((mat_data['total_col'][0, 0], mat_data['total_row'][0, 0]), dtype=tuple)
     for mat_link in mat_data['puzzledata']:
         mat[mat_link[2] - 1, mat_link[3] - 1] = [mat_link[0], mat_link[1]]
