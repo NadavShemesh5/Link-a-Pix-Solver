@@ -1,6 +1,55 @@
 import scipy.io
 import numpy as np
 import time
+from search import SearchProblem, ucs, search
+
+
+class BlokusFillProblem(SearchProblem):
+    """
+    A one-player Blokus game as a search problem.
+    This problem is implemented for you. You should NOT change it!
+    """
+
+    def __init__(self, data, width, height):
+        self.board = Board(data, width, height)
+        self.expanded = 0
+
+    def get_start_state(self):
+        """
+        Returns the start state for the search problem
+        """
+        return self.board
+
+    def is_goal_state(self, state):
+        """
+        state: Search state
+        Returns True if and only if the state is a valid goal state
+        """
+        board = state.state
+        return not np.any(board)
+
+    def get_successors(self, state):
+        """
+        state: Search state
+
+        For a given state, this should return a list of triples,
+        (successor, action, stepCost), where 'successor' is a
+        successor to the current state, 'action' is the action
+        required to get there, and 'stepCost' is the incremental
+        cost of expanding to that successor
+        """
+        # Note that for the search problem, there is only one player - #0
+        self.expanded = self.expanded + 1
+        return [(state.do_move(0, move), move, 1) for move in state.get_legal_moves(0)]
+
+    def get_cost_of_actions(self, actions):
+        """
+        actions: A list of actions to take
+
+        This method returns the total cost of a particular sequence of actions.  The sequence must
+        be composed of legal moves
+        """
+        return len(actions)
 
 
 class Link:
@@ -37,9 +86,8 @@ class Board:
 
         x, y = curr_position
         if not self.data[x, y, 0] > -1:
-            if dist_left == 1 and \
-                    self.data[x, y, 0].init_dist == init_dist and \
-                    self.data[x, y, 0].color == color:
+            if dist_left == 1 and self.data[x, y, 0].init_dist == init_dist \
+                    and self.data[x, y, 0].color == color:
                 paths.append(path + [curr_position])
             return
 
@@ -72,9 +120,9 @@ class Board:
     def pretty_print(self):
         def get_color_coded_str(i):
             return "\033[4{}m{}\033[0m".format(i + 1, " ")
-
         map_modified = np.vectorize(get_color_coded_str)(self.data[:, :, 1])
-        print("\n".join([" ".join(["{}"] * self.width)] * self.height).format(*[x for y in map_modified.tolist() for x in y]))
+        print("\n".join([" ".join(["{}"] * self.width)] * self.height).format(
+            *[x for y in map_modified.tolist() for x in y]))
 
     def __str__(self):
         ret = ""
@@ -103,7 +151,7 @@ class LinkSolver:
             for col in range(height):
                 if data[row, col] != 0:
                     curr_val = data[row, col]
-                    #print(f"label: {row},{col}, {curr_val}")
+                    # print(f"label: {row},{col}, {curr_val}")
                     curr_data[row, col, :] = (curr_val[0], curr_val[1])
                     if curr_val[0] > 2:
                         curr_link = Link(curr_val[0], (row, col), curr_val[1])
@@ -124,7 +172,8 @@ class LinkSolver:
         for link in self.links:
             if any(abs(link.curr_position[0] - x[0]) + abs(link.curr_position[1] - x[1])
                    <= link.init_dist for x in path):
-                link.possible_paths[:] = [old_path for old_path in link.possible_paths if not any(x in old_path[1:] for x in path)]
+                link.possible_paths[:] = [old_path for old_path in link.possible_paths if
+                                          not any(x in old_path[1:] for x in path)]
                 if len(link.possible_paths) == 0:
                     return False
                 link.heuristic_value = len(link.possible_paths)
@@ -152,7 +201,7 @@ class LinkSolver:
             return True
 
         curr_link = self.links.pop(0)
-        #print(curr_link.heuristic_value)
+        # print(curr_link.heuristic_value)
         possible_paths = curr_link.possible_paths
 
         if len(possible_paths) == 0:
@@ -202,13 +251,11 @@ class LinkSolver:
         return self.board.__str__()
 
 
-
 if __name__ == '__main__':
-    mat_data = scipy.io.loadmat('data_20_20_basketball.mat')
+    mat_data = scipy.io.loadmat('data_e_40_40_crystalball.mat')
     mat = np.zeros((mat_data['total_col'][0, 0], mat_data['total_row'][0, 0]), dtype=tuple)
     for mat_link in mat_data['puzzledata']:
         mat[mat_link[2] - 1, mat_link[3] - 1] = [mat_link[0], mat_link[1]]
-
 
     start_time = time.time()
     puzzle = LinkSolver(mat)
@@ -216,4 +263,3 @@ if __name__ == '__main__':
     print("--- %s seconds ---" % (time.time() - start_time))
 
     # Add A* search with value of possible paths
-

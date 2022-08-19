@@ -1,0 +1,125 @@
+import numpy as np
+from pprint import pprint
+
+
+#
+# class Position:
+#     def __init__(self, x, y):
+#         self.x = x
+#         self.y = y
+#
+#     def __eq__(self, other):
+#         return self.x == other.x and self.y == other.y
+#
+#     def __hash__(self):
+#         return hash((self.x, self.y))
+#
+#     def __repr__(self):
+#         return "Position({}, {})".format(self.x, self.y)
+
+class Node:
+    def __init__(self, x, y, color, board):
+        self.x, self.y = x, y
+        self.color = color
+        self.board = board
+
+    def printy(self, num: str = '  '):
+        def get_color_coded_str(i, s: str):
+            return "\033[4{}m{}\033[0m".format(i + 1, s)
+
+        return get_color_coded_str(self.color, num)
+
+    def __repr__(self):
+        self.printy()
+
+
+class Clue(Node):
+    def __init__(self, x: int, y: int, length: int , color: int, board: Board):
+        super().__init__(x, y, color, board)
+        self.length = length
+        self.paths = set()
+
+    def calculate_paths(self):
+        self.paths = set()
+        self.calculate_paths_helper(self.x, self.y, self.length, self.color, self.board)
+
+    def calculate_paths_helper(self, x, y, length, color, board):
+        if length < 1 or not board.is_valid_position(x, y):
+            return
+        board_value = board.get(x, y)
+        if length == 1:
+            if board_value != 0 \
+                    and board_value.color == color \
+                    and self.length == board_value.length:
+                self.paths.add((x, y))
+            return
+        elif board_value != 0:
+            # We hit a clue with wrong length
+            return
+        self.calculate_paths_helper(x + 1, y, length - 1, color, board)
+        self.calculate_paths_helper(x - 1, y, length - 1, color, board)
+        self.calculate_paths_helper(x, y + 1, length - 1, color, board)
+        self.calculate_paths_helper(x, y - 1, length - 1, color, board)
+
+    def __repr__(self):
+        super(str(self.length).zfill(2)).printy()
+
+
+class Board:
+    """
+    Contains the board of the game.
+    Useful parameters:
+    - board_w: width of the board
+    - board_h: height of the board
+    - state: current state of the board
+    """
+
+    def __init__(self, mat_data):
+        self.board_h, self.board_w, self.state = None, None, None
+        self.clues = {}
+        self.parse_mat(mat_data)
+
+    def load_board(self, state, board_w, board_h):
+        self.board_w = board_w
+        self.board_h = board_h
+        self.state = state
+
+    def parse_mat(self, mat_data):
+        mat = np.zeros((mat_data['total_col'][0, 0], mat_data['total_row'][0, 0]), dtype=tuple)
+        for mat_link in mat_data['puzzledata']:
+            x, y = mat_link[2] - 1, mat_link[3] - 1
+            length, color = mat_link[0], mat_link[1]
+            if length > 2:
+                self.clues[(x, y)] = Clue(x=x, y=y, length=length, color=color, board=self)
+                mat[x, y] = self.clues[(x, y)]
+        state = mat
+        width = len(state)
+        height = len(state[0])
+        self.load_board(state=state, board_w=width, board_h=height)
+
+    def calculate_paths(self):
+        for dot in self.clues.values():
+            dot.calculate_paths()
+            print(len(dot.paths))
+
+    def get(self, x, y):
+        return self.state[y, x]
+
+    def is_valid_position(self, x, y):
+        return 0 <= x < self.board_w and 0 <= y < self.board_h
+
+    def get_pretty_state(self):
+        for x in range(len(self.state)):
+            for y in range(len(self.state[0])):
+                v = self.state[x, y]
+                print('00' if v == 0 else v, end=' ')
+            print()
+
+    def pretty_print(self, state):
+        def get_color_coded_str(i):
+            return "\033[4{}m{}\033[0m".format(i + 1, " ")
+
+        print(np.vectorize(get_color_coded_str))
+        map_modified = np.vectorize(get_color_coded_str)(self.state[:, :, 1])
+        print("\n".join([" ".join(["{}"] * self.board_w)] * self.board_h).format(
+            *[x for y in map_modified.tolist() for x in y]))
