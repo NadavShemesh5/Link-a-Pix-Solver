@@ -9,15 +9,12 @@ class Clue(Node):
 
     def calculate_paths(self, board):
         self.paths = []
-        #print(f"---pos:({self.x},{self.y}), len:{self.length}---")
         self.calculate_paths_helper(self.x, self.y, self.length, self.color, board, [], first_call=True)
-        #print(len(self.paths))
-        # for path in self.paths:
-        #     print(path)
+        return self.paths
 
     def calculate_paths_helper(self, x, y, length, color, board, path, first_call=False):
         def reached_dest(value):
-            return length == 1 and value != 0 and value.color == color and self.length == value.length
+            return length == 1 and isinstance(value, Clue) and value.color == color and self.length == value.length
 
         # Check if length or position invalid, or already visited node
         if length < 1 or not board.is_valid_position(x, y) or (x, y) in path:
@@ -37,5 +34,18 @@ class Clue(Node):
         self.calculate_paths_helper(x, y + 1, length - 1, color, board, path + [(x, y)])
         self.calculate_paths_helper(x, y - 1, length - 1, color, board, path + [(x, y)])
 
+    def sort_value(self):
+        return len(self.paths)
+
     def __repr__(self):
         return super().printy(str(self.length).zfill(2))
+
+    def __lt__(self, other):
+        if self.sort_value() == other.sort_value():
+            return self.length > other.length
+        return self.sort_value() < other.sort_value()
+
+    def __deepcopy__(self):
+        new_clue = Clue(self.x, self.y, self.length, self.color)
+        new_clue.paths = self.paths.copy()
+        return new_clue
