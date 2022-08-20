@@ -10,3 +10,4 @@ if __name__ == '__main__':
     start_time = time.time()
     solver.solve()
     print("--- %s seconds ---" % (time.time() - start_time))
+    print(board.Counter)

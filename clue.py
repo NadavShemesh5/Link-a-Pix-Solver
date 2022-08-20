@@ -3,7 +3,7 @@ from node import Node
 
 class Clue(Node):
     def __init__(self, x: int, y: int, length: int, color: int):
-        super().__init__(x, y, color, length)
+        super().__init__(x=x, y=y, color=color, length=length)
         self.paths = []
 
     def calculate_paths(self, board):
@@ -19,13 +19,14 @@ class Clue(Node):
         if length < 1 or not board.is_valid_position(x, y) or (x, y) in path:
             return
 
+        board_val = board.get(x, y)
         # Check if we reached destination
-        if reached_dest(board.get(x, y)):
+        if reached_dest(board_val):
             self.paths.append(path + [(x, y)])
             return
 
         # Check if we hit a clue with wrong length
-        if not first_call and (length == 1 or board.get(x, y) != 0):
+        if not first_call and (length == 1 or board_val != 0):
             return
 
         self.calculate_paths_helper(x + 1, y, length - 1, color, board, path + [(x, y)])

@@ -1,3 +1,5 @@
+import time
+
 from board import Board
 import copy
 
@@ -19,7 +21,7 @@ class BoardSolver:
     def solve(self):
         # Calculate the possible paths for all clues
         self.board.calculate_all_paths()
-        self.solve_helper()
+        return self.solve_helper()
 
     def solve_helper(self):
         if self.is_complete():
@@ -29,7 +31,7 @@ class BoardSolver:
         current_clue, clue_paths = self.get_next_clue()
 
         if len(clue_paths) == 0:
-            print("No paths found! Aborting...")
+            # No paths found! Aborting...
             return False
         else:
             while len(clue_paths) == 1:
@@ -38,7 +40,7 @@ class BoardSolver:
                 self.board.fill_path(path=path, color=current_clue.color, length=current_clue.length)
                 # Reevaluate the clues and sort them
                 if not self.board.reevaluate_clues(path=path):
-                    print("A clue has no possible paths! Aborting...")
+                    # A clue has no possible paths! Aborting...
                     return False
                 if self.is_complete():
                     return True

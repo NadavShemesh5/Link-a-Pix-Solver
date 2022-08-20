@@ -13,6 +13,8 @@ class Board:
     - state: current state of the board
     """
 
+    Counter = 0
+
     def __init__(self, mat_data=None):
         self.board_h, self.board_w, self.state = None, None, None
         self.clues = []
@@ -37,9 +39,6 @@ class Board:
     def calculate_all_paths(self):
         for clue in self.clues:
             clue.calculate_paths(board=self)
-        self.sort_clues()
-
-    def sort_clues(self):
         self.clues.sort()
 
     def get(self, x, y):
@@ -95,11 +94,12 @@ class Board:
                 clue.paths[:] = [old_path for old_path in clue.paths if not any(x in old_path[1:] for x in path)]
                 if len(clue.paths) == 0:
                     return False
-                clue.paths.sort(key=self.sort_by_proximity)
+                #clue.paths.sort(key=self.sort_by_proximity)
         self.clues.sort()
         return True
 
     def __deepcopy__(self):
+        Board.Counter += 1
         new_board = Board()
         new_board.board_h = self.board_h
         new_board.board_w = self.board_w
