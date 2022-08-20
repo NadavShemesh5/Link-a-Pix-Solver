@@ -8,6 +8,8 @@ if __name__ == '__main__':
     board = Board(mat_data)
     solver = BoardSolver(board)
     start_time = time.time()
-    solver.solve()
-    print("--- %s seconds ---" % (time.time() - start_time))
+    if solver.solve():
+        print(f"--- solved in {time.time() - start_time} seconds ---")
+    else:
+        print("--- failed to find a solution ---")
     print(board.Counter)

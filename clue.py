@@ -21,7 +21,7 @@ class Clue(Node):
 
         board_val = board.get(x, y)
         # Check if we reached destination
-        if reached_dest(board_val):
+        if length == 1 and isinstance(board_val, Clue) and board_val.color == color and self.length == board_val.length: #reached_dest(board_val):
             self.paths.append(path + [(x, y)])
             return
 

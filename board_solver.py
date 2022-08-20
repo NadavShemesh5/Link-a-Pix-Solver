@@ -1,8 +1,5 @@
 import time
 
-from board import Board
-import copy
-
 
 class BoardSolver:
     def __init__(self, board):
@@ -18,11 +15,6 @@ class BoardSolver:
         clue_paths = current_clue.paths
         return current_clue, clue_paths
 
-    def solve(self):
-        # Calculate the possible paths for all clues
-        self.board.calculate_all_paths()
-        return self.solve_helper()
-
     def handle_clue_path(self, clue, path):
         # Fill the path's of the clue with the clue's color
         self.board.fill_path(path=path, color=clue.color, length=clue.length)
@@ -33,6 +25,11 @@ class BoardSolver:
         if self.is_complete():
             return True
         return None
+
+    def solve(self):
+        # Calculate the possible paths for all clues
+        self.board.calculate_all_paths()
+        return self.solve_helper()
 
     def solve_helper(self):
         if self.is_complete():
@@ -46,19 +43,15 @@ class BoardSolver:
             return False
         else:
             while len(clue_paths) == 1:
-                # Fill that sole path
-                path = clue_paths[0]
-                handle_res = self.handle_clue_path(clue=current_clue, path=path)
-                if handle_res is True:
-                    return True
-                if handle_res is False:
-                    return False
+                # Handle the path
+                handle_res = self.handle_clue_path(clue=current_clue, path=clue_paths[0])
+                if handle_res is True or handle_res is False:
+                    return handle_res
                 # Get the next clue
                 current_clue, clue_paths = self.get_next_clue()
 
             for path in clue_paths:
-                new_board = self.board.__deepcopy__()
-                board_solver = BoardSolver(new_board)
+                board_solver = BoardSolver(self.board.__deepcopy__())
                 handle_res = board_solver.handle_clue_path(clue=current_clue, path=path)
                 if handle_res is False:
                     continue
