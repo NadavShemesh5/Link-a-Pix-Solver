@@ -45,7 +45,7 @@ class Clue(Node):
             return self.length > other.length
         return self.sort_value() < other.sort_value()
 
-    def __deepcopy__(self):
+    def __deepcopy__(self, memo={}):
         new_clue = Clue(self.x, self.y, self.length, self.color)
         new_clue.paths = self.paths.copy()
         return new_clue

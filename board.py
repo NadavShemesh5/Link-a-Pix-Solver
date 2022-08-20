@@ -2,7 +2,7 @@ import numpy as np
 from clue import Clue
 from node import Node
 from utils import manhattan_distance
-
+import copy
 
 class Board:
     """
@@ -58,14 +58,10 @@ class Board:
                 print('00' if v == 0 else v, end=' ')
             print()
 
-    def remove_clue(self, x, y):
-        clue = self.get(x, y)
-        self.clues.remove(clue)
-
     def fill_path(self, path, color, length):
         # Remove target clue from board
         target_x, target_y = path[-1]
-        self.remove_clue(target_x, target_y)
+        self.clues.remove(self.get(target_x, target_y))
 
         # Add colored nodes to board
         for i, (x, y) in enumerate(path):
@@ -99,7 +95,7 @@ class Board:
         self.clues.sort()
         return True
 
-    def __deepcopy__(self):
+    def __deepcopy__(self, memo={}):
         Board.Counter += 1
         new_board = Board()
         new_board.board_h = self.board_h
