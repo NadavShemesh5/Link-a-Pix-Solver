@@ -51,6 +51,7 @@ class Board:
         return 0 <= x < self.board_w and 0 <= y < self.board_h
 
     def pretty_print(self):
+        print("-------------------------------")
         for x in range(len(self.state)):
             for y in range(len(self.state[0])):
                 v = self.get(x, y)
