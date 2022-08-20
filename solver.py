@@ -1,4 +1,5 @@
-import scipy.io
+from scipy.io import loadmat
+from scipy.optimize import linprog
 import numpy as np
 import time
 
@@ -40,7 +41,7 @@ class Board:
             if dist_left == 1 and \
                     self.data[x, y, 0].init_dist == init_dist and \
                     self.data[x, y, 0].color == color:
-                paths.append(path + [curr_position])
+                paths.append(tuple(path + [curr_position]))
             return
 
         if x != self.width - 1 and (x + 1, y) not in path and not self.data[x + 1, y, 0] > 0:
@@ -118,7 +119,8 @@ class LinkSolver:
         for link in self.links:
             if any(abs(link.curr_position[0] - x[0]) + abs(link.curr_position[1] - x[1])
                    <= link.init_dist for x in path):
-                link.possible_paths[:] = [old_path for old_path in link.possible_paths if not any(x in old_path[1:] for x in path)]
+                link.possible_paths[:] = [old_path for old_path in link.possible_paths if
+                                          not any(x in old_path[1:] for x in path)]
                 if len(link.possible_paths) == 0:
                     return False
                 link.heuristic_value = len(link.possible_paths)
@@ -140,7 +142,95 @@ class LinkSolver:
                 ret -= 1
         return ret
 
+    def deterministic_step(self):
+        if not self.links:
+            return True
+
+        curr_link = self.links.pop(0)
+        possible_paths = curr_link.possible_paths
+
+        while len(possible_paths) == 1:
+            path = possible_paths[0]
+            x, y = path[-1]
+            self.links.remove(self.board.data[x, y, 0])
+            self.board.fill_path(path, curr_link)
+            self.reevaluate_links_and_sort(path)
+            if not self.links:
+                return True
+            curr_link = self.links.pop(0)
+            possible_paths = curr_link.possible_paths
+
+        self.links.insert(0, curr_link)
+        return False
+
+    def linear_programming_step(self):
+        maps = []
+        map_zero = np.ones(self.board.width * self.board.height)
+        for y in range(self.board.height):
+            for x in range(self.board.width):
+                if self.board.data[x, y, 0] > 0:
+                    map_zero[y * self.board.width + x] = 0
+        maps.append(map_zero)
+
+        paths = set()
+        for link in self.links:
+            for path in link.possible_paths:
+                if not path[::-1] in paths:
+                    paths.add(path)
+        paths = list(paths)
+        for path in paths:
+            curr_map = np.zeros(self.board.width * self.board.height)
+            for position in path:
+                x, y = position
+                curr_map[y * self.board.width + x] = 1
+            maps.append(curr_map)
+
+        maps = np.stack(maps, axis=1)
+        b_ub = np.zeros(self.board.width * self.board.height)
+        c = np.full(maps.shape[1], -1.)
+        lb = np.ones(maps.shape[1])
+        lb[0] = -1
+        ub = np.zeros(maps.shape[1])
+        ub[0] = -1
+        bounds = np.column_stack((ub, lb))
+        sol = linprog(c=c, A_ub=maps, b_ub=b_ub, bounds=bounds)
+
+        if not np.any(np.mod(sol['x'], 1) != 0):
+            for i in range(1, len(sol['x'])):
+                if sol['x'][i] > 0.501:
+                    path = paths[i - 1]
+                    x, y = path[0]
+                    curr_link = self.board.data[x, y, 0]
+                    self.board.fill_path(path, curr_link)
+            return True
+
+        for i in range(1, len(sol['x'])):
+            if sol['x'][i] > 0.501:
+                path = paths[i - 1]
+                x, y = path[-1]
+                self.links.remove(self.board.data[x, y, 0])
+                x, y = path[0]
+                curr_link = self.board.data[x, y, 0]
+                self.board.fill_path(path, curr_link)
+                self.links.remove(curr_link)
+                self.reevaluate_links_and_sort(path)
+
+        if not self.links:
+            return True
+        return False
+
     def solve(self):
+        if self.deterministic_step():
+            self.board.pretty_print()
+            return
+
+        if self.linear_programming_step():
+            self.board.pretty_print()
+            return
+
+        self.recursive_step()
+
+    def recursive_step(self):
         if not self.links:
             self.board.pretty_print()
             return True
@@ -172,7 +262,7 @@ class LinkSolver:
                 new_self.board.fill_path(path, curr_link)
                 if not new_self.reevaluate_links_and_sort(path):
                     continue
-                if new_self.solve():
+                if new_self.recursive_step():
                     return True
 
         return False
@@ -198,7 +288,7 @@ class LinkSolver:
 
 
 if __name__ == '__main__':
-    mat_data = scipy.io.loadmat('data_e_40_40_nightscape.mat')
+    mat_data = loadmat('data_128_128_velocisaurus.mat')
     mat = np.zeros((mat_data['total_col'][0, 0], mat_data['total_row'][0, 0]), dtype=tuple)
     for mat_link in mat_data['puzzledata']:
         mat[mat_link[2] - 1, mat_link[3] - 1] = [mat_link[0], mat_link[1]]
