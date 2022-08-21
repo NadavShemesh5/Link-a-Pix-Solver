@@ -10,12 +10,11 @@ class Link:
         self.curr_position = curr_position
         self.color = color
         self.possible_paths = []
-        self.heuristic_value = -1
 
     def __lt__(self, other):
-        if self.heuristic_value == other.heuristic_value:
+        if len(self.possible_paths) == len(other.possible_paths):
             return self.init_dist > other.init_dist
-        return self.heuristic_value < other.heuristic_value
+        return len(self.possible_paths) < len(other.possible_paths)
 
     def __gt__(self, other):
         return False
@@ -56,6 +55,8 @@ class Board:
     def find_all_paths(self, link):
         ret = []
         x, y = link.curr_position
+        if self.data[x, y, 0] > 0:
+            return ret
         if x != self.width - 1 and not self.data[x + 1, y, 0] > 0:
             self.search_helper((x + 1, y), link.init_dist - 1, link.init_dist, [(x, y)], ret, link.color)
         if y != self.height - 1 and not self.data[x, y + 1, 0] > 0:
@@ -77,17 +78,6 @@ class Board:
         map_modified = np.vectorize(get_color_coded_str)(self.data[:, :, 1])
         print("\n".join([" ".join(["{}"] * self.width)] * self.height).format(*[x for y in map_modified.tolist() for x in y]))
 
-    def __str__(self):
-        ret = ""
-        for row in self.data:
-            for item in row:
-                if item[0] != 0:
-                    ret += chr(9608) + chr(9608)
-                else:
-                    ret += "  "
-            ret += "\n"
-        return ret
-
 
 class LinkSolver:
     def __init__(self, data=None):
@@ -105,14 +95,25 @@ class LinkSolver:
                             curr_link = Link(curr_val[0], (row, col), curr_val[1])
                             curr_data[row, col, :] = curr_link, curr_link.color
                             self.links.append(curr_link)
+            self.links.sort(key=lambda x: x.init_dist)
             self.board = Board(curr_data, width, height)
             self.init_paths_for_links()
 
     def init_paths_for_links(self):
+        new_links = []
         for link in self.links:
             paths = self.board.find_all_paths(link)
-            link.possible_paths = paths
-            link.heuristic_value = len(link.possible_paths)
+            if not paths:
+                continue
+            elif len(paths) == 1:
+                path = paths[0]
+                x, y = path[-1]
+                new_links.append(link)
+                new_links.append(self.board.data[x, y, 0])
+                self.board.fill_path(path, link)
+            else:
+                link.possible_paths = paths
+        self.links[:] = [x for x in self.links if x not in new_links]
         self.links.sort()
 
     def reevaluate_links_and_sort(self, path):
@@ -123,8 +124,7 @@ class LinkSolver:
                                           not any(x in old_path[1:] for x in path)]
                 if len(link.possible_paths) == 0:
                     return False
-                link.heuristic_value = len(link.possible_paths)
-                link.possible_paths.sort(key=self.sort_by_proximity)
+                # link.possible_paths.sort(key=self.sort_by_proximity)
         self.links.sort()
         return True
 
@@ -255,6 +255,7 @@ class LinkSolver:
                 curr_link = self.links.pop(0)
                 possible_paths = curr_link.possible_paths
 
+            curr_link.possible_paths.sort(key=self.sort_by_proximity)
             for path in possible_paths:
                 new_self = self.fast_copy()
                 x, y = path[-1]
@@ -274,7 +275,6 @@ class LinkSolver:
         for link in self.links:
             new_link = Link(link.init_dist, link.curr_position, link.color)
             new_link.possible_paths = link.possible_paths[:]
-            new_link.heuristic_value = link.heuristic_value
             new_links.append(new_link)
             x, y = new_link.curr_position
             new_data[x, y, 0] = new_link
