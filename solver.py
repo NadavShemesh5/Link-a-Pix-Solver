@@ -223,11 +223,9 @@ class LinkSolver:
         return False
 
     def solve(self):
-        print(len(self.links))
         if self.deterministic_step():
             self.board.pretty_print()
             return
-        print(len(self.links))
 
         if self.linear_programming_step():
             self.board.pretty_print()
