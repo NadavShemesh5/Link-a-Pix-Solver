@@ -1,6 +1,7 @@
 from node import Node
 import copy
 
+
 class Clue(Node):
     def __init__(self, x: int, y: int, length: int, color: int):
         super().__init__(x=x, y=y, color=color, length=length)
@@ -10,6 +11,8 @@ class Clue(Node):
     def calculate_paths(self, board):
         self.paths = []
         self.calculate_paths_helper(self.x, self.y, self.length, self.color, board, [], first_call=True)
+
+        # Initialize path dictionaries
         self.paths_dicts = {}
         for i in range(len(self.paths)):
             for p in self.paths[i]:
@@ -17,6 +20,7 @@ class Clue(Node):
                     self.paths_dicts[p].append(self.paths[i])
                 else:
                     self.paths_dicts[p] = [self.paths[i]]
+
         return self.paths
 
     def calculate_paths_helper(self, x, y, length, color, board, path, first_call=False):

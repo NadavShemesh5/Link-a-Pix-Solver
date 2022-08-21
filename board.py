@@ -89,15 +89,15 @@ class Board:
     def reevaluate_clues(self, path):
         TimeTester.time("reevaluate_clues")
         for clue in self.clues:
-            for p in path:
-                if p in clue.paths_dicts:
+            for xy in path:
+                if xy in clue.paths_dicts:
                     TimeTester.time("check_blocked")
                     # Check if all paths of the clue are now blocked
-                    paths = clue.paths_dicts[p]
-                    for k in paths:
-                        if k in clue.paths:
-                            clue.paths.remove(k)
-                    clue.paths_dicts[p] = None
+                    paths = clue.paths_dicts[xy]
+                    for p in paths:
+                        if p in clue.paths:
+                            clue.paths.remove(p)
+                    clue.paths_dicts[xy] = None
                     TimeTester.time("check_blocked")
                     if len(clue.paths) == 0:
                         TimeTester.time("reevaluate_clues")
