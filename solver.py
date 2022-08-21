@@ -10,6 +10,7 @@ class Link:
         self.curr_position = curr_position
         self.color = color
         self.possible_paths = []
+        self.paths_dict = {}
 
     def __lt__(self, other):
         if len(self.possible_paths) == len(other.possible_paths):
@@ -23,6 +24,12 @@ class Link:
         if not other > -1:
             return self.curr_position == other.curr_position
         return False
+
+    def __copy__(self):
+        ret = Link(self.init_dist, self.curr_position, self.color)
+        ret.possible_paths = self.possible_paths.copy()
+        ret.paths_dict = self.paths_dict.copy()
+        return ret
 
 
 class Board:
@@ -78,6 +85,9 @@ class Board:
         map_modified = np.vectorize(get_color_coded_str)(self.data[:, :, 1])
         print("\n".join([" ".join(["{}"] * self.width)] * self.height).format(*[x for y in map_modified.tolist() for x in y]))
 
+    def __copy__(self):
+        return Board(np.copy(self.data), self.width, self.height)
+
 
 class LinkSolver:
     def __init__(self, data=None):
@@ -109,24 +119,34 @@ class LinkSolver:
                 path = paths[0]
                 self.board.fill_path(path, link)
                 for link in new_links:
-                    if any(abs(link.curr_position[0] - x[0]) + abs(link.curr_position[1] - x[1])
-                           <= link.init_dist for x in path):
-                        link.possible_paths[:] = [old_path for old_path in link.possible_paths if
-                                                  not any(x in old_path[:-1] for x in path)]
+                    for position in path:
+                        if position in link.paths_dict:
+                            temp_paths = link.paths_dict[position]
+                            for p in temp_paths:
+                                if p in link.possible_paths:
+                                    link.possible_paths.remove(p)
+                            del link.paths_dict[position]
             else:
                 link.possible_paths = paths
+                for i in range(len(link.possible_paths)):
+                    for p in link.possible_paths[i]:
+                        if p in link.paths_dict:
+                            link.paths_dict[p].append(link.possible_paths[i])
+                        else:
+                            link.paths_dict[p] = [link.possible_paths[i]]
                 new_links.append(link)
         self.links = new_links
         self.links[:] = [x for x in self.links if x.possible_paths]
 
     def reevaluate_links_and_sort(self, path):
         for link in self.links:
-            if any(abs(link.curr_position[0] - x[0]) + abs(link.curr_position[1] - x[1])
-                   <= link.init_dist for x in path):
-                link.possible_paths[:] = [old_path for old_path in link.possible_paths if
-                                          not any(x in old_path[1:] for x in path)]
-                if len(link.possible_paths) == 0:
-                    return False
+            for position in path:
+                if position in link.paths_dict:
+                    temp_paths = link.paths_dict[position]
+                    for p in temp_paths:
+                        if p in link.possible_paths:
+                            link.possible_paths.remove(p)
+                    del link.paths_dict[position]
         return True
 
     def sort_by_proximity(self, path):
@@ -262,7 +282,7 @@ class LinkSolver:
 
             curr_link.possible_paths.sort(key=self.sort_by_proximity)
             for path in possible_paths:
-                new_self = self.fast_copy()
+                new_self = self.__copy__()
                 x, y = path[-1]
                 new_self.links.remove(new_self.board.data[x, y, 0])
                 new_self.board.fill_path(path, curr_link)
@@ -273,17 +293,15 @@ class LinkSolver:
 
         return False
 
-    def fast_copy(self):
+    def __copy__(self):
         new_self = LinkSolver()
-        new_data = np.copy(self.board.data)
+        new_board = self.board.__copy__()
         new_links = []
         for link in self.links:
-            new_link = Link(link.init_dist, link.curr_position, link.color)
-            new_link.possible_paths = link.possible_paths[:]
+            new_link = link.__copy__()
             new_links.append(new_link)
             x, y = new_link.curr_position
-            new_data[x, y, 0] = new_link
-        new_board = Board(new_data, self.board.width, self.board.height)
+            new_board.data[x, y, 0] = new_link
         new_self.board = new_board
         new_self.links = new_links
         return new_self
