@@ -107,13 +107,17 @@ class LinkSolver:
                 continue
             elif len(paths) == 1:
                 path = paths[0]
-                x, y = path[-1]
-                new_links.append(link)
-                new_links.append(self.board.data[x, y, 0])
                 self.board.fill_path(path, link)
+                for link in new_links:
+                    if any(abs(link.curr_position[0] - x[0]) + abs(link.curr_position[1] - x[1])
+                           <= link.init_dist for x in path):
+                        link.possible_paths[:] = [old_path for old_path in link.possible_paths if
+                                                  not any(x in old_path[:-1] for x in path)]
             else:
                 link.possible_paths = paths
-        self.links[:] = [x for x in self.links if x not in new_links]
+                new_links.append(link)
+        self.links = new_links
+        self.links[:] = [x for x in self.links if x.possible_paths]
         self.links.sort()
 
     def reevaluate_links_and_sort(self, path):
@@ -124,7 +128,6 @@ class LinkSolver:
                                           not any(x in old_path[1:] for x in path)]
                 if len(link.possible_paths) == 0:
                     return False
-                # link.possible_paths.sort(key=self.sort_by_proximity)
         self.links.sort()
         return True
 
@@ -220,9 +223,11 @@ class LinkSolver:
         return False
 
     def solve(self):
+        print(len(self.links))
         if self.deterministic_step():
             self.board.pretty_print()
             return
+        print(len(self.links))
 
         if self.linear_programming_step():
             self.board.pretty_print()
@@ -282,9 +287,6 @@ class LinkSolver:
         new_self.board = new_board
         new_self.links = new_links
         return new_self
-
-    def __str__(self):
-        return self.board.__str__()
 
 
 if __name__ == '__main__':
