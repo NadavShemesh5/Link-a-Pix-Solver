@@ -2,8 +2,8 @@ import numpy as np
 from clue import Clue
 from contstants import PRINT_BOARD
 from node import Node
-from utils import manhattan_distance
 from timetester import TimeTester
+
 
 class Board:
     """
@@ -68,28 +68,40 @@ class Board:
     def sort_by_proximity(self, path):
         ret = 0
         for x, y in path:
-            if x - 1 < 0 or self.state[x - 1, y] != 0:
+            if x - 1 < 0:
                 ret -= 1
-            if x + 1 >= self.board_w or self.state[x + 1, y] != 0:
+            elif self.state[x - 1, y] != 0:
                 ret -= 1
-            if y - 1 < 0 or self.state[x, y - 1] != 0:
+            if x + 1 >= self.board_w:
                 ret -= 1
-            if y + 1 >= self.board_h or self.state[x, y + 1] != 0:
+            elif self.state[x + 1, y] != 0:
+                ret -= 1
+            if y - 1 < 0:
+                ret -= 1
+            elif self.state[x, y - 1] != 0:
+                ret -= 1
+            if y + 1 >= self.board_h:
+                ret -= 1
+            elif self.state[x, y + 1] != 0:
                 ret -= 1
         return ret
 
     def reevaluate_clues(self, path):
         TimeTester.time("reevaluate_clues")
         for clue in self.clues:
-            if any(manhattan_distance((clue.x, clue.y), (x, y)) <= clue.length for x, y in path):
-                # Check if all paths of the clue are now blocked
-                clue.paths[:] = [old_path for old_path in clue.paths if not any(x in old_path[1:] for x in path)]
-                if len(clue.paths) == 0:
-                    TimeTester.time("reevaluate_clues")
-                    return False
-
-                #clue.paths.sort(key=self.sort_by_proximity)
-
+            for p in path:
+                if p in clue.paths_dicts:
+                    TimeTester.time("check_blocked")
+                    # Check if all paths of the clue are now blocked
+                    paths = clue.paths_dicts[p]
+                    for k in paths:
+                        if k in clue.paths:
+                            clue.paths.remove(k)
+                    clue.paths_dicts[p] = None
+                    TimeTester.time("check_blocked")
+                    if len(clue.paths) == 0:
+                        TimeTester.time("reevaluate_clues")
+                        return False
         self.clues.sort()
         TimeTester.time("reevaluate_clues")
         return True
@@ -106,6 +118,3 @@ class Board:
             new_board.clues.append(clue_copy)
             new_board.state[clue.x, clue.y] = clue_copy
         return new_board
-
-
-

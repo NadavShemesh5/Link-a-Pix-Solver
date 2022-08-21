@@ -12,7 +12,7 @@ def test_all(contains_path):
     from os.path import isfile, join
     path = './'
     files = [f for f in listdir(path) if isfile(join(path, f))]
-    test_iterations = 10
+    test_iterations = 1
     results = {}
     for i in range(test_iterations):
         for file in files:
@@ -47,5 +47,6 @@ def run_sample(filename):
 
 
 if __name__ == '__main__':
-    run_sample("data_32_32_damura.mat")
-    #test_all("data_32")
+    #run_sample("data_32_32_plutuscat.mat")
+    #run_sample("data_32_32_damura.mat")
+    test_all("data_32")

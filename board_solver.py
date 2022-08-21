@@ -1,5 +1,8 @@
 import time
 
+import numpy as np
+from scipy.optimize import linprog
+
 from timetester import TimeTester
 
 
