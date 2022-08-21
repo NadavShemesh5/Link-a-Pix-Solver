@@ -1,5 +1,7 @@
 import time
 
+from timetester import TimeTester
+
 
 class BoardSolver:
     def __init__(self, board):
@@ -13,12 +15,15 @@ class BoardSolver:
     def get_next_clue(self):
         current_clue = self.board.clues.pop(0)
         clue_paths = current_clue.paths
+        TimeTester.time("sort_by_proximity")
+        current_clue.paths.sort(key=self.board.sort_by_proximity)
+        TimeTester.time("sort_by_proximity")
         return current_clue, clue_paths
 
     def handle_clue_path(self, clue, path):
         # Fill the path's of the clue with the clue's color
         self.board.fill_path(path=path, color=clue.color, length=clue.length)
-        # Reevaluate the clues and sort them
+        # Check if other paths were blocked
         if not self.board.reevaluate_clues(path=path):
             # A clue has no possible paths! Aborting...
             return False
@@ -28,7 +33,13 @@ class BoardSolver:
 
     def solve(self):
         # Calculate the possible paths for all clues
+        TimeTester.time("calculate_all_paths")
         self.board.calculate_all_paths()
+        sum_of_paths = 0
+        for clue in self.board.clues:
+            sum_of_paths += len(clue.paths)
+        print(f"{len(self.board.clues)} clues, {sum_of_paths} paths")
+        TimeTester.time("calculate_all_paths")
         return self.solve_helper()
 
     def solve_helper(self):

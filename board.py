@@ -1,8 +1,9 @@
 import numpy as np
 from clue import Clue
+from contstants import PRINT_BOARD
 from node import Node
 from utils import manhattan_distance
-import copy
+from timetester import TimeTester
 
 class Board:
     """
@@ -12,8 +13,6 @@ class Board:
     - board_h: height of the board
     - state: current state of the board
     """
-
-    Counter = 0
 
     def __init__(self, mat_data=None):
         self.board_h, self.board_w, self.state = None, None, None
@@ -26,13 +25,13 @@ class Board:
         for mat_link in mat_data['puzzledata']:
             x, y = mat_link[2] - 1, mat_link[3] - 1
             length, color = mat_link[0], mat_link[1]
-            if length > 1:
+            if length > 2:
                 clue = Clue(x=x, y=y, length=length, color=color)
                 self.clues.append(clue)
-                self.set(x, y, clue)
+                self.state[x, y] = clue
             else:
                 # If length is 1, then we can automatically color it
-                self.set(x, y, Node(x=x, y=y, color=color, length=length))
+                self.state[x, y] = Node(x=x, y=y, color=color, length=length)
         self.board_w = len(self.state)
         self.board_h = len(self.state[0])
 
@@ -41,71 +40,71 @@ class Board:
             clue.calculate_paths(board=self)
         self.clues.sort()
 
-    def get(self, x, y):
-        return self.state[x, y]
-
-    def set(self, x, y, value):
-        self.state[x, y] = value
-
     def is_valid_position(self, x, y):
         return 0 <= x < self.board_w and 0 <= y < self.board_h
 
     def pretty_print(self):
+        if not PRINT_BOARD:
+            return
         print("-------------------------------")
         for x in range(len(self.state)):
             for y in range(len(self.state[0])):
-                v = self.get(x, y)
+                v = self.state[x, y]
                 print('00' if v == 0 else v, end=' ')
             print()
 
     def fill_path(self, path, color, length):
         # Remove target clue from board
         target_x, target_y = path[-1]
-        self.clues.remove(self.get(target_x, target_y))
+        self.clues.remove(self.state[target_x, target_y])
 
         # Add colored nodes to board
         for i, (x, y) in enumerate(path):
             if i == 0 or i == len(path) - 1:
-                self.set(x, y, Node(x=x, y=y, color=color, length=length))
+                self.state[x, y] = Node(x=x, y=y, color=color, length=length)
             else:
-                self.set(x, y, Node(x=x, y=y, color=color))
+                self.state[x, y] = Node(x=x, y=y, color=color)
 
     def sort_by_proximity(self, path):
         ret = 0
-        for position in path:
-            x, y = position
-            if x - 1 < 0 or self.get(x - 1, y) != 0:
+        for x, y in path:
+            if x - 1 < 0 or self.state[x - 1, y] != 0:
                 ret -= 1
-            if x + 1 >= self.board_w or self.get(x + 1, y) != 0:
+            if x + 1 >= self.board_w or self.state[x + 1, y] != 0:
                 ret -= 1
-            if y - 1 < 0 or self.get(x, y - 1) != 0:
+            if y - 1 < 0 or self.state[x, y - 1] != 0:
                 ret -= 1
-            if y + 1 >= self.board_h or self.get(x, y + 1) != 0:
+            if y + 1 >= self.board_h or self.state[x, y + 1] != 0:
                 ret -= 1
         return ret
 
     def reevaluate_clues(self, path):
+        TimeTester.time("reevaluate_clues")
         for clue in self.clues:
             if any(manhattan_distance((clue.x, clue.y), (x, y)) <= clue.length for x, y in path):
                 # Check if all paths of the clue are now blocked
                 clue.paths[:] = [old_path for old_path in clue.paths if not any(x in old_path[1:] for x in path)]
                 if len(clue.paths) == 0:
+                    TimeTester.time("reevaluate_clues")
                     return False
+
                 #clue.paths.sort(key=self.sort_by_proximity)
+
         self.clues.sort()
+        TimeTester.time("reevaluate_clues")
         return True
 
     def __deepcopy__(self, memo={}):
-        Board.Counter += 1
+        TimeTester.DeepCopies += 1
         new_board = Board()
         new_board.board_h = self.board_h
         new_board.board_w = self.board_w
-        new_board.state = self.state.copy()
+        new_board.state = np.copy(self.state)
         new_board.clues = []
         for clue in self.clues:
             clue_copy = clue.__deepcopy__()
             new_board.clues.append(clue_copy)
-            new_board.set(clue.x, clue.y, clue_copy)
+            new_board.state[clue.x, clue.y] = clue_copy
         return new_board
 
 
