@@ -118,7 +118,6 @@ class LinkSolver:
                 new_links.append(link)
         self.links = new_links
         self.links[:] = [x for x in self.links if x.possible_paths]
-        self.links.sort()
 
     def reevaluate_links_and_sort(self, path):
         for link in self.links:
@@ -128,7 +127,6 @@ class LinkSolver:
                                           not any(x in old_path[1:] for x in path)]
                 if len(link.possible_paths) == 0:
                     return False
-        self.links.sort()
         return True
 
     def sort_by_proximity(self, path):
@@ -149,7 +147,8 @@ class LinkSolver:
         if not self.links:
             return True
 
-        curr_link = self.links.pop(0)
+        curr_link = min(self.links)
+        self.links.remove(curr_link)
         possible_paths = curr_link.possible_paths
 
         while len(possible_paths) == 1:
@@ -160,7 +159,8 @@ class LinkSolver:
             self.reevaluate_links_and_sort(path)
             if not self.links:
                 return True
-            curr_link = self.links.pop(0)
+            curr_link = min(self.links)
+            self.links.remove(curr_link)
             possible_paths = curr_link.possible_paths
 
         self.links.insert(0, curr_link)
@@ -238,7 +238,8 @@ class LinkSolver:
             self.board.pretty_print()
             return True
 
-        curr_link = self.links.pop(0)
+        curr_link = min(self.links)
+        self.links.remove(curr_link)
         possible_paths = curr_link.possible_paths
 
         if len(possible_paths) == 0:
@@ -255,7 +256,8 @@ class LinkSolver:
                 if not self.links:
                     self.board.pretty_print()
                     return True
-                curr_link = self.links.pop(0)
+                curr_link = min(self.links)
+                self.links.remove(curr_link)
                 possible_paths = curr_link.possible_paths
 
             curr_link.possible_paths.sort(key=self.sort_by_proximity)
