@@ -4,16 +4,19 @@ import copy
 
 class Clue(Node):
     def __init__(self, x: int, y: int, length: int, color: int):
-        super().__init__(x=x, y=y, color=color, length=length)
+        super().__init__(x=x, y=y, color=color, length=length, is_clue=True)
         self.paths = None
         self.general_paths_dicts = None
         self.paths_dicts = None
 
-
     def calculate_paths(self, board):
+        if not board.state[self.x, self.y].is_clue:
+            return
         self.paths = []
         self.calculate_paths_helper(self.x, self.y, self.length, self.color, board, [], first_call=True)
+        return self.paths
 
+    def initialize_dicts(self):
         # Initialize path dictionaries
         self.general_paths_dicts = {}
         self.paths_dicts = []
@@ -22,7 +25,6 @@ class Clue(Node):
             for p in self.paths[i]:
                 self.paths_dicts[i][p] = self.paths[i]
                 self.general_paths_dicts[p] = True
-        return self.paths
 
     def calculate_paths_helper(self, x, y, length, color, board, path, first_call=False):
         # Check if length or position invalid, or already visited node

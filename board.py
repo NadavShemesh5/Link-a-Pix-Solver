@@ -5,6 +5,7 @@ from node import Node
 from timetester import TimeTester
 import copy
 
+
 class Board:
     """
     Contains the board of the game.
@@ -36,9 +37,25 @@ class Board:
         self.board_h = len(self.state[0])
 
     def calculate_all_paths(self):
+        new_clues = []
+        self.clues.sort(key=lambda x: x.length)
         for clue in self.clues:
-            clue.calculate_paths(board=self)
+            paths = clue.calculate_paths(board=self)
+            if not paths:
+                continue
+            elif len(paths) == 1:
+                path = paths[0]
+                self.fill_path(path, clue.color, clue.length, remove_target_clue=False)
+                self.reevaluate_clues(new_clues, path, with_return=False)
+            else:
+                clue.paths = paths
+                clue.initialize_dicts()
+                new_clues.append(clue)
+        self.clues[:] = [x for x in new_clues if x.paths]
         self.clues.sort()
+
+    def remove_clue(self, clue_list, clue):
+        clue_list.remove(clue)
 
     def is_valid_position(self, x, y):
         return 0 <= x < self.board_w and 0 <= y < self.board_h
@@ -53,9 +70,9 @@ class Board:
                 print('00' if v == 0 else v, end=' ')
             print()
 
-    def fill_path(self, path, color, length):
-        # Remove target clue from board
-        self.clues.remove(self.state[path[-1]])
+    def fill_path(self, path, color, length, remove_target_clue=True):
+        if remove_target_clue:
+            self.remove_clue(self.clues, self.state[path[-1]])
         # Add colored nodes to board
         for i, (x, y) in enumerate(path):
             if i == 0 or i == len(path) - 1:
@@ -84,12 +101,11 @@ class Board:
                 ret -= 1
         return ret
 
-    def reevaluate_clues(self, path):
+    def reevaluate_clues(self, clues_list, path, with_return=True):
         TimeTester.time("reevaluate_clues")
-        for clue in self.clues:
+        for clue in clues_list:
             for xy in path:
                 if xy in clue.general_paths_dicts:
-
                     TimeTester.time("check_blocked")
                     for i in reversed(range(len(clue.paths_dicts))):
                         if xy in clue.paths_dicts[i]:
@@ -98,11 +114,13 @@ class Board:
                     del clue.general_paths_dicts[xy]
                     TimeTester.time("check_blocked")
 
-                    if len(clue.paths) == 0:
+                    if with_return and len(clue.paths) == 0:
                         TimeTester.time("reevaluate_clues")
                         return False
         TimeTester.time("reevaluate_clues")
-        return True
+        if with_return:
+            return True
+
 
     def __deepcopy__(self, memo={}):
         TimeTester.DeepCopies += 1

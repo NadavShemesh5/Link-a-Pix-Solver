@@ -37,7 +37,6 @@ def run_sample(filename):
         for key, value in TimeTester.TimesGlobal.items():
             print(f"{key}: {value}")
         print(f"DeepCopies: {TimeTester.DeepCopies}")
-
     else:
         print("--- failed to find a solution ---")
     return runtime

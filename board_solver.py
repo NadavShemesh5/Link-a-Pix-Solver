@@ -18,7 +18,7 @@ class BoardSolver:
 
     def get_next_clue(self):
         current_clue = min(self.board.clues)
-        self.board.clues.remove(current_clue)
+        self.board.remove_clue(self.board.clues, current_clue)
         clue_paths = current_clue.paths
         TimeTester.time("sort_by_proximity")
         current_clue.paths.sort(key=self.board.sort_by_proximity)
@@ -29,7 +29,7 @@ class BoardSolver:
         # Fill the path's of the clue with the clue's color
         self.board.fill_path(path=path, color=clue.color, length=clue.length)
         # Check if other paths were blocked
-        if not self.board.reevaluate_clues(path=path):
+        if not self.board.reevaluate_clues(clues_list=self.board.clues, path=path):
             # A clue has no possible paths! Aborting...
             return False
         if self.is_complete():
@@ -41,10 +41,6 @@ class BoardSolver:
         TimeTester.time("calculate_all_paths")
         self.board.calculate_all_paths()
         TimeTester.time("calculate_all_paths")
-        sum_of_paths = 0
-        # for clue in self.board.clues:
-        #     sum_of_paths += len(clue.paths)
-        #print(f"{len(self.board.clues)} clues, {sum_of_paths} paths")
         return self.solve_helper()
 
     def solve_helper(self):
