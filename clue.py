@@ -6,21 +6,22 @@ class Clue(Node):
     def __init__(self, x: int, y: int, length: int, color: int):
         super().__init__(x=x, y=y, color=color, length=length)
         self.paths = None
+        self.general_paths_dicts = None
         self.paths_dicts = None
+
 
     def calculate_paths(self, board):
         self.paths = []
         self.calculate_paths_helper(self.x, self.y, self.length, self.color, board, [], first_call=True)
 
         # Initialize path dictionaries
-        self.paths_dicts = {}
+        self.general_paths_dicts = {}
+        self.paths_dicts = []
         for i in range(len(self.paths)):
+            self.paths_dicts.append({})
             for p in self.paths[i]:
-                if p in self.paths_dicts:
-                    self.paths_dicts[p].append(self.paths[i])
-                else:
-                    self.paths_dicts[p] = [self.paths[i]]
-
+                self.paths_dicts[i][p] = self.paths[i]
+                self.general_paths_dicts[p] = True
         return self.paths
 
     def calculate_paths_helper(self, x, y, length, color, board, path, first_call=False):
@@ -58,12 +59,14 @@ class Clue(Node):
         return False
 
     def __eq__(self, other):
-        if not other > -1:
-            return self.x == other.x and self.y == other.y
-        return False
+        return isinstance(other, Node) and self.x == other.x and self.y == other.y
 
     def __deepcopy__(self, memo={}):
         new_clue = Clue(self.x, self.y, self.length, self.color)
         new_clue.paths = self.paths.copy()
+        new_clue.general_paths_dicts = self.general_paths_dicts.copy()
         new_clue.paths_dicts = self.paths_dicts.copy()
         return new_clue
+
+    # def __hash__(self):
+    #     return int((self.x + self.y + self.length + self.color) % 10000)

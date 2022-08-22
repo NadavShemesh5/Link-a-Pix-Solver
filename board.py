@@ -3,7 +3,7 @@ from clue import Clue
 from contstants import PRINT_BOARD
 from node import Node
 from timetester import TimeTester
-
+import copy
 
 class Board:
     """
@@ -55,9 +55,7 @@ class Board:
 
     def fill_path(self, path, color, length):
         # Remove target clue from board
-        target_x, target_y = path[-1]
-        self.clues.remove(self.state[target_x, target_y])
-
+        self.clues.remove(self.state[path[-1]])
         # Add colored nodes to board
         for i, (x, y) in enumerate(path):
             if i == 0 or i == len(path) - 1:
@@ -90,19 +88,19 @@ class Board:
         TimeTester.time("reevaluate_clues")
         for clue in self.clues:
             for xy in path:
-                if xy in clue.paths_dicts:
+                if xy in clue.general_paths_dicts:
+
                     TimeTester.time("check_blocked")
-                    # Check if all paths of the clue are now blocked
-                    paths = clue.paths_dicts[xy]
-                    for p in paths:
-                        if p in clue.paths:
-                            clue.paths.remove(p)
-                    clue.paths_dicts[xy] = None
+                    for i in reversed(range(len(clue.paths_dicts))):
+                        if xy in clue.paths_dicts[i]:
+                            clue.paths.remove(clue.paths_dicts[i][xy])
+                            del clue.paths_dicts[i]
+                    del clue.general_paths_dicts[xy]
                     TimeTester.time("check_blocked")
+
                     if len(clue.paths) == 0:
                         TimeTester.time("reevaluate_clues")
                         return False
-        self.clues.sort()
         TimeTester.time("reevaluate_clues")
         return True
 
@@ -113,6 +111,7 @@ class Board:
         new_board.board_w = self.board_w
         new_board.state = np.copy(self.state)
         new_board.clues = []
+        new_board.removed_clues = {}
         for clue in self.clues:
             clue_copy = clue.__deepcopy__()
             new_board.clues.append(clue_copy)

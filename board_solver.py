@@ -2,6 +2,7 @@ import time
 
 import numpy as np
 from scipy.optimize import linprog
+from sortedcontainers import SortedList
 
 from timetester import TimeTester
 
@@ -16,7 +17,8 @@ class BoardSolver:
             return True
 
     def get_next_clue(self):
-        current_clue = self.board.clues.pop(0)
+        current_clue = min(self.board.clues)
+        self.board.clues.remove(current_clue)
         clue_paths = current_clue.paths
         TimeTester.time("sort_by_proximity")
         current_clue.paths.sort(key=self.board.sort_by_proximity)
@@ -38,11 +40,11 @@ class BoardSolver:
         # Calculate the possible paths for all clues
         TimeTester.time("calculate_all_paths")
         self.board.calculate_all_paths()
-        sum_of_paths = 0
-        for clue in self.board.clues:
-            sum_of_paths += len(clue.paths)
-        print(f"{len(self.board.clues)} clues, {sum_of_paths} paths")
         TimeTester.time("calculate_all_paths")
+        sum_of_paths = 0
+        # for clue in self.board.clues:
+        #     sum_of_paths += len(clue.paths)
+        #print(f"{len(self.board.clues)} clues, {sum_of_paths} paths")
         return self.solve_helper()
 
     def solve_helper(self):

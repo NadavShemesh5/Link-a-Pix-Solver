@@ -33,7 +33,6 @@ def run_sample(filename):
     if solver.solve():
         runtime = time.time() - start_time
         print(f"--- solved in {runtime} seconds ---")
-
         # print details:
         for key, value in TimeTester.TimesGlobal.items():
             print(f"{key}: {value}")
@@ -41,12 +40,10 @@ def run_sample(filename):
 
     else:
         print("--- failed to find a solution ---")
-
-    #print(board.Counter)
     return runtime
 
 
 if __name__ == '__main__':
-    #run_sample("data_32_32_plutuscat.mat")
+    #run_sample('data_32_32_kangaroo.mat')
     #run_sample("data_32_32_damura.mat")
     test_all("data_32")

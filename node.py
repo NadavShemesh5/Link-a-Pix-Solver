@@ -4,7 +4,6 @@ from contstants import PRINT_SHOW_LENGTHS
 class Node:
 
     # Should show lengths in the final printout
-
     def __init__(self, x, y, color, length='  '):
         self.x, self.y = x, y
         self.color = color
