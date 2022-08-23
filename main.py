@@ -3,6 +3,7 @@ import time
 from board_solver import BoardSolver
 from board import Board
 import numpy as np
+from sty import fg, bg, ef, rs
 
 from timetester import TimeTester
 
@@ -43,6 +44,7 @@ def run_sample(filename):
 
 
 if __name__ == '__main__':
-    #run_sample('data_32_32_kangaroo.mat')
-    #run_sample("data_32_32_damura.mat")
+    # run_sample('data_32_32_kangaroo.mat')
+    # run_sample("data_32_32_damura.mat")
     test_all("data_32")
+

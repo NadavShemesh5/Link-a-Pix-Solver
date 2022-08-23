@@ -3,7 +3,6 @@ from clue import Clue
 from contstants import PRINT_BOARD
 from node import Node
 from timetester import TimeTester
-import copy
 
 
 class Board:
@@ -48,7 +47,6 @@ class Board:
                 self.fill_path(path, clue.color, clue.length, remove_target_clue=False)
                 self.reevaluate_clues(new_clues, path, with_return=False)
             else:
-                clue.paths = paths
                 clue.initialize_dicts()
                 new_clues.append(clue)
         self.clues[:] = [x for x in new_clues if x.paths]
@@ -121,7 +119,6 @@ class Board:
         if with_return:
             return True
 
-
     def __deepcopy__(self, memo={}):
         TimeTester.DeepCopies += 1
         new_board = Board()
@@ -133,5 +130,5 @@ class Board:
         for clue in self.clues:
             clue_copy = clue.__deepcopy__()
             new_board.clues.append(clue_copy)
-            new_board.state[clue.x, clue.y] = clue_copy
+            new_board.state[clue_copy.x, clue_copy.y] = clue_copy
         return new_board

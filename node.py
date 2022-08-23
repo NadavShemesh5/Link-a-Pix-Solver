@@ -1,8 +1,8 @@
+from sty import fg, bg, ef, rs
 from contstants import PRINT_SHOW_LENGTHS
 
 
 class Node:
-
     # Should show lengths in the final printout
     def __init__(self, x, y, color, length='  ', is_clue=False):
         self.x, self.y = x, y
@@ -11,10 +11,7 @@ class Node:
         self.is_clue = is_clue
 
     def printy(self, num: str = '  '):
-        def get_color_coded_str(i, s: str):
-            return f"\033[4{i + 1}m{s}\033[0m".format(i + 1, s)
-
-        return get_color_coded_str(self.color, num)
+        return bg(int(self.color + 1)) + num + rs.all
 
     def __repr__(self):
         return self.printy(str(self.length).zfill(2) if PRINT_SHOW_LENGTHS else '  ')
