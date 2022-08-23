@@ -40,6 +40,7 @@ class Board:
         self.clues.sort(key=lambda x: x.length)
         for clue in self.clues:
             paths = clue.calculate_paths(board=self)
+            TimeTester.update_paths_num(paths)
             if not paths:
                 continue
             elif len(paths) == 1:

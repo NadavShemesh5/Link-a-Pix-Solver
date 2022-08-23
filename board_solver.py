@@ -1,9 +1,3 @@
-import time
-
-import numpy as np
-from scipy.optimize import linprog
-from sortedcontainers import SortedList
-
 from timetester import TimeTester
 
 
@@ -67,5 +61,5 @@ class BoardSolver:
                 handle_res = board_solver.handle_clue_path(clue=current_clue, path=path)
                 if handle_res is False:
                     continue
-                if board_solver.solve_helper():
+                elif handle_res or board_solver.solve_helper():
                     return True

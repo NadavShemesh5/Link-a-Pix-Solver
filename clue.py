@@ -1,6 +1,4 @@
 from node import Node
-import copy
-
 
 class Clue(Node):
     def __init__(self, x: int, y: int, length: int, color: int):
