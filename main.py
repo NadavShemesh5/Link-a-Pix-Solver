@@ -75,8 +75,4 @@ def analyze(specific_sample: str = None, samples_contains: str = None, all_files
 
 
 if __name__ == '__main__':
-    # run_sample('data_32_32_kangaroo.mat')
-    # run_sample("data_32_32_damura.mat")
-    # test_all("data_32")
-
     analyze(all_files=True)

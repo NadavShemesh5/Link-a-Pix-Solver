@@ -32,7 +32,7 @@ class Clue(Node):
         board_val = board.state[x, y]
         # Check if we reached destination
         if length == 1 and isinstance(board_val, Clue) and board_val.color == color and self.length == board_val.length:
-            self.paths.append(path + [(x, y)])
+            self.paths.append(tuple(path + [(x, y)]))
             return
 
         # Check if we hit a clue with wrong length
@@ -55,18 +55,20 @@ class Clue(Node):
             return self.length > other.length
         return self.sort_value() < other.sort_value()
 
-    def __gt__(self, other):
-        return False
+    # def __gt__(self, other):
+    #     return False
+
+    # def __eq__(self, other):
+    #     if not other > -1:
+    #         return self.x == other.x and self.y == other.y
+    #     return False
 
     def __eq__(self, other):
         return isinstance(other, Node) and self.x == other.x and self.y == other.y
 
-    def __deepcopy__(self, memo={}):
+    def __deepcopy__(self):
         new_clue = Clue(self.x, self.y, self.length, self.color)
         new_clue.paths = self.paths.copy()
         new_clue.general_paths_dicts = self.general_paths_dicts.copy()
         new_clue.paths_dicts = self.paths_dicts.copy()
         return new_clue
-
-    # def __hash__(self):
-    #     return int((self.x + self.y + self.length + self.color) % 10000)

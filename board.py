@@ -25,7 +25,7 @@ class Board:
         for mat_link in mat_data['puzzledata']:
             x, y = mat_link[2] - 1, mat_link[3] - 1
             length, color = mat_link[0], mat_link[1]
-            if length > 2:
+            if length > 1:
                 clue = Clue(x=x, y=y, length=length, color=color)
                 self.clues.append(clue)
                 self.state[x, y] = clue
@@ -51,7 +51,6 @@ class Board:
                 clue.initialize_dicts()
                 new_clues.append(clue)
         self.clues[:] = [x for x in new_clues if x.paths]
-        self.clues.sort()
 
     def remove_clue(self, clue_list, clue):
         clue_list.remove(clue)
@@ -66,7 +65,7 @@ class Board:
         for x in range(len(self.state)):
             for y in range(len(self.state[0])):
                 v = self.state[x, y]
-                print('00' if v == 0 else v, end=' ')
+                print('  ' if v == 0 else v, end=' ')
             print()
 
     def fill_path(self, path, color, length, remove_target_clue=True):
@@ -82,21 +81,13 @@ class Board:
     def sort_by_proximity(self, path):
         ret = 0
         for x, y in path:
-            if x - 1 < 0:
+            if x - 1 < 0 or self.state[x - 1, y] != 0:
                 ret -= 1
-            elif self.state[x - 1, y] != 0:
+            if x + 1 >= self.board_w or self.state[x + 1, y] != 0:
                 ret -= 1
-            if x + 1 >= self.board_w:
+            if y - 1 < 0 or self.state[x, y - 1] != 0:
                 ret -= 1
-            elif self.state[x + 1, y] != 0:
-                ret -= 1
-            if y - 1 < 0:
-                ret -= 1
-            elif self.state[x, y - 1] != 0:
-                ret -= 1
-            if y + 1 >= self.board_h:
-                ret -= 1
-            elif self.state[x, y + 1] != 0:
+            if y + 1 >= self.board_h or self.state[x, y + 1] != 0:
                 ret -= 1
         return ret
 
@@ -120,7 +111,7 @@ class Board:
         if with_return:
             return True
 
-    def __deepcopy__(self, memo={}):
+    def __deepcopy__(self):
         TimeTester.DeepCopies += 1
         new_board = Board()
         new_board.board_h = self.board_h
