@@ -1,11 +1,29 @@
 import time
-
 import contstants
 from board import Board
 from board_solver import BoardSolver
 from scipy.io import loadmat
 import numpy as np
 from timetester import TimeTester
+import matplotlib.pyplot as plt
+
+
+
+def create_graphs(time_results):
+
+    categories = ["20_20", "32_32", "40_40", "64_64", "128_128"]
+    for cat in categories:
+        group_times = [time_results[result] for result in time_results.keys() if cat in result]
+        group_paths = [TimeTester.PathsNumber[result] for result in TimeTester.PathsNumber.keys() if
+                       cat in result]
+        # Logarithmic graph
+        plt.xlabel('Feasible paths', fontsize=14, labelpad=15)
+        plt.ylabel('Solving time (s)', fontsize=14, labelpad=10)
+        plt.scatter(group_paths, group_times, s=10, label=cat)
+        plt.yscale("log")
+        plt.xscale("log")
+    plt.legend([c.replace('_', ' x ') for c in categories])
+    plt.savefig('foo.png', dpi=800, bbox_inches="tight")
 
 
 def run_samples(contains_path: str):
@@ -14,15 +32,15 @@ def run_samples(contains_path: str):
     path = './'
     files = [f for f in listdir(path) if isfile(join(path, f))]
     test_iterations = 1
-    results = {}
+    time_results = {}
     for i in range(test_iterations):
         for file in files:
             if contains_path in file:
-                if file not in results:
-                    results[file] = []
-                results[file].append(run_sample(file))
-    for key, value in results.items():
+                time_results[file] = run_sample(file)
+    for key, value in time_results.items():
         print(f"{key}, avg:{np.average(value)}")
+    if contstants.CREATE_GRAPHS:
+        create_graphs(time_results)
 
 
 def run_sample(filename: str):
@@ -69,10 +87,12 @@ def analyze(specific_sample: str = None, samples_contains: str = None, all_files
     elif samples_contains:
         run_samples(samples_contains)
     elif all_files:
-        run_samples('')
+        run_samples('.mat')
     else:
         print("Error! You need to choose at-least one file to analyze!")
 
 
 if __name__ == '__main__':
-    analyze(all_files=True)
+    analyze(all_files=True,
+            samples_contains=None,
+            specific_sample=None)
