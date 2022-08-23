@@ -35,8 +35,8 @@ def run_sample(filename):
         runtime = time.time() - start_time
         print(f"--- solved in {runtime} seconds ---")
         # print details:
-        for key, value in TimeTester.TimesGlobal.items():
-            print(f"{key}: {value}")
+        # for key, value in TimeTester.TimesGlobal.items():
+        #     print(f"{key}: {value}")
         print(f"DeepCopies: {TimeTester.DeepCopies}")
     else:
         print("--- failed to find a solution ---")

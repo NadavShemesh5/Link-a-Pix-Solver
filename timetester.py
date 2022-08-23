@@ -1,5 +1,7 @@
 import time
 
+from contstants import PRINT_SPECIFIC_TIME_MEASURES
+
 
 class TimeTester:
     DeepCopies = 0
@@ -11,6 +13,8 @@ class TimeTester:
 
     @staticmethod
     def time(key):
+        if not PRINT_SPECIFIC_TIME_MEASURES:
+            return
         if key not in TimeTester.TimesLocal:
             TimeTester.TimesLocal[key] = time.time()
         else:
