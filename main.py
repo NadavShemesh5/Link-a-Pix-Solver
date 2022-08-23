@@ -28,19 +28,32 @@ def create_graphs_helper(time_groups, paths_groups):
 
     plt.clf()
 
+    fig, ax = plt.subplots(figsize=(10,10))
+
+    x = np.arange(len(fixed_cats))  # the label locations
+    width = 0.35  # the width of the bars
+
     # their bars
-    row_avg = [1.11, 11.12, 46.48, 80.93, 716.82]
-    plt.bar(fixed_cats, row_avg)
+    row_avg = [1.11, 11.12, 46.48, 80.93, 716.82] #includes data_e versions
+    # row_avg = [1.11, 4.91] # does not include data_e versions
+    rects1 = ax.bar(x - width/2, row_avg, width)
+
     # our bars
     row_avg = [sum(ti) / len(ti) for ti in time_groups]
-    plt.bar(fixed_cats, row_avg)
+    rects2 = ax.bar(x + width/2, [round(r, 2) for r in row_avg], width)
+
     # graph properties
     plt.xlabel('Categories', fontsize=14, labelpad=15)
     plt.ylabel('Solving time (s)', fontsize=14, labelpad=10)
     plt.yscale("log")
-
+    ax.set_xticks(x, fixed_cats)
+    ax.bar_label(rects1, padding=8)
+    ax.bar_label(rects2, padding=8)
     plt.legend(["Article results", "Our results"])
-    plt.savefig('runtime_comparison_graph.png', dpi=800, bbox_inches="tight")
+    plt.savefig('runtime_comparison_without_l.p_graph.png', dpi=800, bbox_inches="tight")
+
+
+
 
     # b, m = np.polynomial.polynomial.polyfit(x=all_groups_paths, y=all_groups_times, deg=1)
     # y = np.multiply(m, all_groups_paths) + b
@@ -73,8 +86,13 @@ def run_samples(contains_path: str):
     time_results = {}
     for i in range(test_iterations):
         for file in files:
-            if contains_path in file and ".mat" in file:
-                time_results[file] = run_sample(file)
+            if isinstance(contains_path, str):
+                if contains_path in file and ".mat" in file:
+                    time_results[file] = run_sample(file)
+            else:
+                for p in contains_path:
+                    if p in file and ".mat" in file:
+                        time_results[file] = run_sample(file)
     for key, value in time_results.items():
         print(f"{key}, avg:{np.average(value)}")
     if contstants.CREATE_GRAPHS:
@@ -104,7 +122,7 @@ def run_sample(filename: str):
         return -1
 
 
-def analyze(specific_sample: str = None, samples_contains: str = None, all_files: bool = False):
+def analyze(specific_sample: str = None, samples_contains=None, all_files: bool = False):
     """
     Analyzes a specific sample, category, or all the available files
 
@@ -113,8 +131,9 @@ def analyze(specific_sample: str = None, samples_contains: str = None, all_files
     specific_sample : str, optional
         A specific sample to analyze, like: 'data_32_32_kangaroo.mat'
 
-    samples_contains : str, optional
-        Analyzes only samples that contain this text, like: 'data_20' or 'data_32'
+    samples_contains : str or array, optional
+        Analyzes only samples that contain this text (or one of the texts in the list),
+        like: 'data_20' or ['data_32', 'data_20']
 
     all_files : bool, optional
         Choose if to analyze all the samples
