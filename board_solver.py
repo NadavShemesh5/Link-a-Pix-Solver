@@ -1,10 +1,7 @@
-import time
-
 import numpy as np
 from scipy.optimize import linprog
-from sortedcontainers import SortedList
+from contstants import USE_LINEAR_STEP
 from node import Node
-
 from timetester import TimeTester
 
 
@@ -47,9 +44,10 @@ class BoardSolver:
         if handle_res is True:
             return True
 
-        handle_res = self.linear_programming_step()
-        if handle_res is True:
-            return True
+        if USE_LINEAR_STEP:
+            handle_res = self.linear_programming_step()
+            if handle_res is True:
+                return True
 
         return self.recursive_step()
 
@@ -86,15 +84,12 @@ class BoardSolver:
                     return handle_res
                 # Get the next clue
                 current_clue, clue_paths = self.get_next_clue()
-
             for path in clue_paths:
                 board_solver = BoardSolver(self.board.__deepcopy__())
                 handle_res = board_solver.handle_clue_path(clue=current_clue, path=path)
                 if handle_res is False:
                     continue
-                elif handle_res is True:
-                    return handle_res
-                if board_solver.recursive_step():
+                elif handle_res or board_solver.recursive_step():
                     return True
 
     def init_map_zero(self):

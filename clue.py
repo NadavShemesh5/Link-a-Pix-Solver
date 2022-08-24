@@ -1,6 +1,5 @@
 from node import Node
 
-
 class Clue(Node):
     def __init__(self, x: int, y: int, length: int, color: int):
         super().__init__(x=x, y=y, color=color, length=length, is_clue=True)

@@ -1,4 +1,5 @@
 import time
+from contstants import PRINT_SPECIFIC_TIME_MEASURES, CHECK_NUM_OF_PATHS
 
 
 class TimeTester:
@@ -9,8 +10,13 @@ class TimeTester:
     TimesLocal = {}
     TimesGlobal = {}
 
+    CurrentSample = None
+    PathsNumber = {}
+
     @staticmethod
     def time(key):
+        if not PRINT_SPECIFIC_TIME_MEASURES:
+            return
         if key not in TimeTester.TimesLocal:
             TimeTester.TimesLocal[key] = time.time()
         else:
@@ -21,3 +27,11 @@ class TimeTester:
                 TimeTester.TimesGlobal[key] += diff
             del TimeTester.TimesLocal[key]
 
+    @staticmethod
+    def update_paths_num(paths):
+        if not CHECK_NUM_OF_PATHS or not paths:
+            return
+        if TimeTester.CurrentSample not in TimeTester.PathsNumber:
+            TimeTester.PathsNumber[TimeTester.CurrentSample] = len(paths)
+        else:
+            TimeTester.PathsNumber[TimeTester.CurrentSample] += len(paths)
