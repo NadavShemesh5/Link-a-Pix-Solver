@@ -36,15 +36,13 @@ class Board:
         self.board_h = len(self.state[0])
 
     def calculate_all_paths(self):
-
-        for clue in self.clues:
-            TimeTester.update_paths_num(clue.calculate_paths(board=self))
-
+        # Update path number for all clues:
+        # for clue in self.clues:
+        #     TimeTester.update_paths_num(clue.calculate_paths(board=self))
         new_clues = []
         self.clues.sort(key=lambda x: x.length)
         for clue in self.clues:
             paths = clue.calculate_paths(board=self)
-            #TimeTester.update_paths_num(paths)
             if not paths:
                 continue
             elif len(paths) == 1:
