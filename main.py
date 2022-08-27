@@ -8,11 +8,28 @@ from timetester import TimeTester
 import matplotlib.pyplot as plt
 import pickle
 
-categories = ["20_20", "32_32", "40_40", "64_64", "128_128"]
+categories = ["20_20", "data_32_32", "data_e_32_32", "data_e_40_40", "64_64", "128_128"]  # full test
+
+
+# categories = ["20_20", "data_32_32"]  # test without linear step
+
+
+def get_fixed_category_name(cat_name, row_down=False):
+    c = cat_name
+    addon = " common"
+    if 'data_' in cat_name:
+        c = c.replace('data_', '')
+    if 'e_' in cat_name:
+        c = c.replace('e_', '')
+        addon = " non-fully filled"
+    c = c.replace('_', ' x ')
+    if row_down:
+        c = c + "\n"
+    return c + addon
 
 
 def create_graphs_helper(time_groups, paths_groups):
-    fixed_cats = [c.replace('_', ' x ') for c in categories]
+    fixed_cats = [get_fixed_category_name(c) for c in categories]
 
     for i in range(len(time_groups)):
         times = time_groups[i]
@@ -28,38 +45,44 @@ def create_graphs_helper(time_groups, paths_groups):
 
     plt.clf()
 
-    fig, ax = plt.subplots(figsize=(10,10))
+    fig, ax = plt.subplots(figsize=(10, 10))
 
     x = np.arange(len(fixed_cats))  # the label locations
     width = 0.35  # the width of the bars
 
     # their bars
-    row_avg = [1.11, 11.12, 46.48, 80.93, 716.82] #includes data_e versions
-    # row_avg = [1.11, 4.91] # does not include data_e versions
-    rects1 = ax.bar(x - width/2, row_avg, width)
+    row_avg = [1.11, 4.91, 21.48, 46.48, 80.93, 716.82]  # includes data_e versions
+    # row_avg = [1.11, 4.91]  # does not include data_e versions
+    if len(fixed_cats) != len(row_avg):
+        print("The length of row_average and fixed_cats must be equal!")
+        exit(1)
+    rects1 = ax.bar(x - width / 2, row_avg, width)
 
     # our bars
     row_avg = [sum(ti) / len(ti) for ti in time_groups]
-    rects2 = ax.bar(x + width/2, [round(r, 2) for r in row_avg], width)
+    rects2 = ax.bar(x + width / 2, [round(r, 2) for r in row_avg], width)
 
     # graph properties
     plt.xlabel('Categories', fontsize=14, labelpad=15)
     plt.ylabel('Solving time (s)', fontsize=14, labelpad=10)
     plt.yscale("log")
-    ax.set_xticks(x, fixed_cats)
+    ax.set_xticks(x, [get_fixed_category_name(c, row_down=True) for c in categories])
     ax.bar_label(rects1, padding=8)
     ax.bar_label(rects2, padding=8)
     plt.legend(["Article results", "Our results"])
-    plt.savefig('runtime_comparison_without_l.p_graph.png', dpi=800, bbox_inches="tight")
+    plt.savefig(f'runtime_comparison_graph_{contstants.USE_LINEAR_STEP}.png', dpi=800, bbox_inches="tight")
 
+    plt.clf()
+    paths_combined = [k for p in paths_groups if len(p) > 0 for k in p]
+    times_combined = [k for p in time_groups if len(p) > 0 for k in p]
+    b, m = np.polynomial.polynomial.polyfit(x=np.log(paths_combined), y=np.log(times_combined), deg=1)
+    print(b, m)
 
-
-
-    # b, m = np.polynomial.polynomial.polyfit(x=all_groups_paths, y=all_groups_times, deg=1)
-    # y = np.multiply(m, all_groups_paths) + b
-    # plt.plot(all_groups_paths, y)
-    # plt.show()
-    # print(b, m)
+    plt.clf()
+    paths_combined = [379.2, 2345.0, 5134.5, 8327.7, 13043.2, 36665.0]
+    times_combined = [1.11, 4.91, 21.48, 46.48, 80.93, 716.82]
+    b, m = np.polynomial.polynomial.polyfit(x=np.log(paths_combined), y=np.log(times_combined), deg=1)
+    print(b, m)
 
 
 def create_graphs(time_results):
@@ -71,9 +94,11 @@ def create_graphs(time_results):
                  cat in result]
         time_groups.append(times)
         paths_groups.append(paths)
-        if len(times) and len(paths) > 0:
-            with open(f'{cat}.pickle', 'wb') as handle:
-                pickle.dump((times, paths), handle, protocol=pickle.HIGHEST_PROTOCOL)
+        if len(times) > 0:
+            with open(f'{cat}_times.pickle', 'wb') as h1:
+                pickle.dump(times, h1, protocol=pickle.HIGHEST_PROTOCOL)
+            # with open(f'{cat}_paths.pickle', 'wb') as h2:
+            #     pickle.dump(paths, h2, protocol=pickle.HIGHEST_PROTOCOL)
     create_graphs_helper(time_groups, paths_groups)
 
 
@@ -162,9 +187,11 @@ if __name__ == '__main__':
         p_groups = []
         for category in categories:
             try:
-                with open(f'{category}.pickle', 'rb') as h:
-                    t, g = pickle.load(h)
+                with open(f'{category}_times.pickle', 'rb') as f1:
+                    t = pickle.load(f1)
                     t_groups.append(t)
+                with open(f'{category}_paths.pickle', 'rb') as f2:
+                    g = pickle.load(f2)
                     p_groups.append(g)
             except (OSError, IOError) as e:
                 fail = True
