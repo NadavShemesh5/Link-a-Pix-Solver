@@ -3,9 +3,9 @@
 ## instructions
 1. Use "pip install -r" command to install requirements
 2. Run our program from the command line, following those guidelines:
-USAGE:
-python main.py <options>
-EXAMPLES:
+<br>USAGE:
+<br>python main.py &lt;options&gt;
+<br>EXAMPLES:
 - python main.py --solve all
  Solves all of the available samples
 - python main.py --solve all --times --clues
