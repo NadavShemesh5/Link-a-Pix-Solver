@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.optimize import linprog
-from contstants import USE_LINEAR_STEP
+
+import settings
 from node import Node
 from timetester import TimeTester
 
@@ -44,7 +45,7 @@ class BoardSolver:
         if handle_res is True:
             return True
 
-        if USE_LINEAR_STEP:
+        if settings.USE_LINEAR_STEP:
             handle_res = self.linear_programming_step()
             if handle_res is True:
                 return True
