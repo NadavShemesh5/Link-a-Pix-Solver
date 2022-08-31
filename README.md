@@ -14,3 +14,5 @@
 <br>Solves a specific sample with the given name
 - python main.py --solve category --name 20_20 --print False
 <br>Solves a specific category of 20_20 boards, without printing the game board results
+  
+3. In order to print the puzzle solutions in color, we recommend running the program from some IDE interface, e.g. Pycharm
