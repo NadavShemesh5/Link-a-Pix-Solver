@@ -1,6 +1,7 @@
 import numpy as np
+
+import settings
 from clue import Clue
-from contstants import PRINT_BOARD
 from node import Node
 from timetester import TimeTester
 
@@ -17,6 +18,7 @@ class Board:
     def __init__(self, mat_data=None):
         self.board_h, self.board_w, self.state = None, None, None
         self.clues = []
+        self.all_paths = {}
         if mat_data is not None:
             self.parse_mat(mat_data)
 
@@ -38,11 +40,20 @@ class Board:
     def calculate_all_paths(self):
         # Update path number for all clues:
         # for clue in self.clues:
-        #     TimeTester.update_paths_num(clue.calculate_paths(board=self))
+        #     clue.calculate_paths(board=self)
+        #     counter = 0
+        #     if True:
+        #         for pa in clue.paths:
+        #             if pa not in self.all_paths and pa[::-1] not in self.all_paths:
+        #                 self.all_paths[pa] = True
+        #                 counter += 1
+        #     TimeTester.update_paths_num([], paths_num=counter)
+
         new_clues = []
         self.clues.sort(key=lambda x: x.length)
         for clue in self.clues:
             paths = clue.calculate_paths(board=self)
+            # TimeTester.update_paths_num(clue.calculate_paths(board=self))
             if not paths:
                 continue
             elif len(paths) == 1:
@@ -61,9 +72,8 @@ class Board:
         return 0 <= x < self.board_w and 0 <= y < self.board_h
 
     def pretty_print(self):
-        if not PRINT_BOARD:
+        if not settings.PRINT_BOARD:
             return
-        print("-------------------------------")
         for x in range(len(self.state)):
             for y in range(len(self.state[0])):
                 v = self.state[x, y]
@@ -120,6 +130,7 @@ class Board:
         new_board.board_w = self.board_w
         new_board.state = np.copy(self.state)
         new_board.clues = []
+        new_board.all_paths = self.all_paths.copy()
         new_board.removed_clues = {}
         for clue in self.clues:
             clue_copy = clue.__deepcopy__()

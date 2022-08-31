@@ -1,5 +1,5 @@
-from sty import fg, bg, ef, rs
-from contstants import PRINT_SHOW_LENGTHS
+from sty import bg, rs
+import settings
 
 
 class Node:
@@ -14,4 +14,4 @@ class Node:
         return bg(int(self.color + 1)) + num + rs.all
 
     def __repr__(self):
-        return self.printy(str(self.length).zfill(2) if PRINT_SHOW_LENGTHS else '  ')
+        return self.printy(str(self.length).zfill(2) if settings.PRINT_SHOW_LENGTHS else '  ')

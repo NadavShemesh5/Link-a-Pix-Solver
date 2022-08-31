@@ -1,5 +1,5 @@
 import time
-import contstants
+import settings
 from board import Board
 from board_solver import BoardSolver
 from scipy.io import loadmat
@@ -7,11 +7,9 @@ import numpy as np
 from timetester import TimeTester
 import matplotlib.pyplot as plt
 import pickle
+import os
 
 categories = ["20_20", "data_32_32", "data_e_32_32", "data_e_40_40", "64_64", "128_128"]  # full test
-
-
-# categories = ["20_20", "data_32_32"]  # test without linear step
 
 
 def get_fixed_category_name(cat_name, row_down=False):
@@ -31,15 +29,26 @@ def get_fixed_category_name(cat_name, row_down=False):
 def create_graphs_helper(time_groups, paths_groups):
     fixed_cats = [get_fixed_category_name(c) for c in categories]
 
+    # for k in range(len(time_groups)):
+    #     for i in reversed(range(len(paths_groups[k].copy()))):
+    #         print(paths_groups[k][i])
+    #         if paths_groups[k][i] == 0:
+    #             del time_groups[k][i]
+    #             #del fixed_cats[i]
+    #             del paths_groups[k][i]
+
     for i in range(len(time_groups)):
         times = time_groups[i]
         paths = paths_groups[i]
         # Logarithmic graph
         plt.xlabel('Feasible paths', fontsize=14, labelpad=15)
         plt.ylabel('Solving time (s)', fontsize=14, labelpad=10)
+        print(times, paths)
         plt.scatter(paths, times, s=10, label=categories[i])
         plt.yscale("log")
         plt.xscale("log")
+
+        print(np.average(paths))
     plt.legend(fixed_cats)
     plt.savefig('runtime_summary_graph.png', dpi=800, bbox_inches="tight")
 
@@ -70,7 +79,7 @@ def create_graphs_helper(time_groups, paths_groups):
     ax.bar_label(rects1, padding=8)
     ax.bar_label(rects2, padding=8)
     plt.legend(["Article results", "Our results"])
-    plt.savefig(f'runtime_comparison_graph_{contstants.USE_LINEAR_STEP}.png', dpi=800, bbox_inches="tight")
+    plt.savefig(f'runtime_comparison_graph_{settings.USE_LINEAR_STEP}.png', dpi=800, bbox_inches="tight")
 
     plt.clf()
     paths_combined = [k for p in paths_groups if len(p) > 0 for k in p]
@@ -107,6 +116,8 @@ def run_samples(contains_path: str):
     from os.path import isfile, join
     path = './'
     files = [f for f in listdir(path) if isfile(join(path, f))]
+    if not len(files) > 0:
+        file_error()
     test_iterations = 1
     time_results = {}
     for i in range(test_iterations):
@@ -118,29 +129,40 @@ def run_samples(contains_path: str):
                 for p in contains_path:
                     if p in file and ".mat" in file:
                         time_results[file] = run_sample(file)
-    for key, value in time_results.items():
-        print(f"{key}, avg:{np.average(value)}")
-    if contstants.CREATE_GRAPHS:
+    if settings.PRINT_SPECIFIC_TIME_MEASURES:
+        print(f"\nRuntime summary:")
+        print("----------------------------------------------------")
+        for key, value in time_results.items():
+            print(f"{key}, avg:{np.average(value)}")
+    if settings.CREATE_GRAPHS:
         create_graphs(time_results)
+
+
+def file_error():
+    print("No file or category was found with the given name, make sure to type the right name")
+    exit(1)
 
 
 def run_sample(filename: str):
     TimeTester.CurrentSample = filename
-    print(f"--- now solving {filename} ---")
+    print(f"\n --- Now solving {filename}:")
+    if not os.path.isfile(filename):
+        file_error()
     board = Board(loadmat(filename))
     solver = BoardSolver(board)
     start_time = time.time()
     if solver.solve():
         runtime = time.time() - start_time
-        if contstants.PRINT_SPECIFIC_TIME_MEASURES:
+        if settings.PRINT_SPECIFIC_TIME_MEASURES:
             for key, value in TimeTester.TimesGlobal.items():
                 print(f"{key}: {value}")
-        if contstants.CHECK_NUM_OF_PATHS:
+        if settings.CHECK_NUM_OF_PATHS:
             if filename in TimeTester.PathsNumber:
                 print(f"{filename}                | total_paths:{TimeTester.PathsNumber[filename]}")
             # for key, value in TimeTester.PathsNumber.items():
             #     print(f"{key}                | total_paths:{value}")
-        print(f"--- solved in {runtime} seconds ---")
+        if settings.PRINT_SPECIFIC_TIME_MEASURES:
+            print(f"--- solved in {runtime} seconds --- \n")
         return runtime
     else:
         print("--- failed to find a solution ---")
@@ -174,14 +196,84 @@ def analyze(specific_sample: str = None, samples_contains=None, all_files: bool 
         print("Error! You need to choose at-least one file to analyze!")
 
 
-def load():
-    analyze(all_files=True,
-            samples_contains=None,
-            specific_sample=None)
+def load(options):
+    run = options.solve
+    if run == 'all':
+        analyze(all_files=True,
+                samples_contains=False,
+                specific_sample=None)
+    elif run == 'category':
+        category_name = options.name
+        if not category_name:
+            print("Error! you need to state a category name to analyze!")
+            exit(1)
+        analyze(all_files=False,
+                samples_contains=category_name,
+                specific_sample=None)
+    elif run == 'sample':
+        sample_name = options.name
+        if not sample_name:
+            print("Error! you need to state a sample name to analyze!")
+            exit(1)
+        if '.mat' not in sample_name:
+            sample_name += '.mat'
+        analyze(all_files=False,
+                samples_contains=False,
+                specific_sample=sample_name)
+    else:
+        print("Error! You need to choose at-least one type - 'all', 'category', or 'sample'")
+        exit(1)
 
 
-if __name__ == '__main__':
-    if contstants.CREATE_GRAPHS:
+def main():
+    from optparse import OptionParser
+
+    usage_str = """
+            USAGE:      python main.py <options>
+            EXAMPLES:  (1) python main.py --solve all
+                          - Solves all of the available samples
+                       (2) python main.py --solve all --times --clues
+                          - Solves all of the available samples, prints the runtime summary and shows the clues in the printed solution   
+                       (3) python main.py --solve sample --name data_32_32_samurai
+                          - Solves a specific sample with the given name
+                       (4) python main.py --solve category --name 20_20 --print False
+                          - Solves a specific category of 20_20 boards, without printing the game board results
+            """
+    parser = OptionParser(usage_str)
+    parser.add_option('-g', '--graphs', dest='graphs',
+                      help='Indicates whether to create runtime graphs',
+                      default=False, action="store_true")
+    parser.add_option('-p', '--print', dest='print',
+                      help='Indicates whether to print the complete game board',
+                      default=True, action="store_true")
+    parser.add_option('-c', '--clues', dest='clues',
+                      help='Indicates whether to show the clues numbers in the game board',
+                      default=False, action="store_true")
+    parser.add_option('-t', '--times', dest='times',
+                      help='Indicates whether to show specific time measures of different components in each sample',
+                      default=False, action="store_true")
+    parser.add_option('-l', '--linear-step', dest='linear',
+                      help='Indicates whether to include the linear programming step or not',
+                      default=True, action="store_true")
+    parser.add_option('-s', '--solve', dest='solve',
+                      help='Choose if to run all samples, a category of samples, or a specific sample')
+    parser.add_option('-n', '--name', dest='name',
+                      help='Indicate the name of the specific sample or category to analyze')
+
+    # Parse the arguments
+    options, cover_points = parser.parse_args()
+
+    if not options.solve:
+        parser.error('solve type was not given, please state -s [sample|category|all]')
+
+    # Initialize settings
+    settings.CREATE_GRAPHS = options.graphs
+    settings.PRINT_BOARD = options.print
+    settings.PRINT_SHOW_LENGTHS = options.clues
+    settings.PRINT_SPECIFIC_TIME_MEASURES = options.times
+    settings.USE_LINEAR_STEP = options.linear
+
+    if settings.CREATE_GRAPHS:
         fail = False
         t_groups = []
         p_groups = []
@@ -197,10 +289,14 @@ if __name__ == '__main__':
                 fail = True
                 break
         if fail:
-            print("PICKLE DOESN'T EXIST!")
-            load()
+            # print("PICKLE DOESN'T EXIST!")
+            load(options)
         else:
-            print("all found - create graphs!!")
+            # print("all found - create graphs!!")
             create_graphs_helper(t_groups, p_groups)
     else:
-        load()
+        load(options)
+
+
+if __name__ == '__main__':
+    main()
